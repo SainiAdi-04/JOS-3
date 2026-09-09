@@ -12,7 +12,7 @@ try:
     from .comfmod import preferred_temp
     from . import construction as cons
     from .construction import _BSAst
-    from .params import ALL_OUT_PARAMS, show_outparam_docs
+    from .params import ALL_OUT_PARAMS, show_outparam_docs, SETPOINT_HEAD_CORE
 # Import from absolute path
 # These codes are for debugging
 except ImportError:
@@ -22,7 +22,7 @@ except ImportError:
     from jos3.comfmod import preferred_temp
     from jos3 import construction as cons
     from jos3.construction import _BSAst
-    from jos3.params import ALL_OUT_PARAMS, show_outparam_docs
+    from jos3.params import ALL_OUT_PARAMS, show_outparam_docs, SETPOINT_HEAD_CORE
 
 
 class JOS3():
@@ -206,6 +206,7 @@ class JOS3():
 
         # Set point temp [oC]
         self.setpt_cr = np.ones(17)*37  # core
+        self.setpt_cr[0] = SETPOINT_HEAD_CORE
         self.setpt_sk = np.ones(17)*34  # skin
 
         # Initial body temp [oC]
@@ -233,7 +234,8 @@ class JOS3():
                 "limit_dshiv/dt": False,
                 "bat_positive": False,
                 "ava_zero": False,
-                "shivering": False,}
+                "shivering": False,
+                "sweat_model": "modified",}
         threg.PRE_SHIV = 0 # reset
         self._history = []
         self._t = dt.timedelta(0) # Elapsed time
@@ -272,6 +274,7 @@ class JOS3():
 
         # Set new setpoint temperatures
         self.setpt_cr = self.Tcr
+        self.setpt_cr[0] = SETPOINT_HEAD_CORE
         self.setpt_sk = self.Tsk
         self.options["ava_zero"] = False
 
@@ -360,7 +363,8 @@ class JOS3():
         wet, e_sk, e_max, e_sweat = threg.evaporation(
                 err_cr, err_sk, tsk,
                 self._ta, self._rh, r_et,
-                self._height, self._weight, self._bsa_equation, self._age)
+                self._height, self._weight, self._bsa_equation, self._age,
+                sweat_model=self.options.get("sweat_model", "modified"))
 
         # Skin blood flow, basal skin blood flow [L/h]
         bf_sk = threg.skin_bloodflow(err_cr, err_sk,
@@ -950,8 +954,9 @@ class JOS3():
         """
         err_cr = self.Tcr - self.setpt_cr
         err_sk = self.Tsk - self.setpt_sk
-        wet, *_ = threg.evaporation(err_cr, err_sk,
-                self._ta, self._rh, self.Ret, self._bsa_rate, self._age)
+        wet, *_ = threg.evaporation(err_cr, err_sk, self.Tsk,
+                self._ta, self._rh, self.Ret, self._height, self._weight, self._bsa_equation, self._age,
+                sweat_model=self.options.get("sweat_model", "modified"))
         return wet
 
     @property
