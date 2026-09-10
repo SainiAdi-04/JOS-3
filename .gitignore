@@ -6,3 +6,7 @@ jos3.egg-info/
 .eggs/
 *.csv
 test.py
+.venv/
+__pycache__/
+paper.pdf
+comparison_curve.png

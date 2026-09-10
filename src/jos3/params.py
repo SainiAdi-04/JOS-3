@@ -2,6 +2,10 @@
 
 import textwrap
 
+# Head core set-point temperature [oC]
+# In standard JOS-3 literature it was 37.46 oC; lowered to 36.9 oC to fix late-onset sweating.
+SETPOINT_HEAD_CORE = 36.9
+
 ALL_OUT_PARAMS = {
     'Age': {'ex_output': True,
          'meaning': 'Age',

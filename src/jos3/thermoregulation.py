@@ -284,7 +284,8 @@ tetens = lambda x: 0.61078*10**(7.5*x/(x+237.3))
 
 
 def evaporation(err_cr, err_sk, tsk, ta, rh, ret,
-                height=1.72, weight=74.43, equation="dubois", age=20):
+                height=1.72, weight=74.43, equation="dubois", age=20,
+                sweat_model="modified"):
     """
     Calculate evaporative heat loss.
 
@@ -337,7 +338,15 @@ def evaporation(err_cr, err_sk, tsk, ta, rh, ret,
             0.051, 0.026, 0.0155, 0.051, 0.026, 0.0155,
             0.073, 0.036, 0.0175, 0.073, 0.036, 0.0175,])
 
-    sig_sweat = (371.2*err_cr[0]) + (33.64*(wrms-clds))
+    # Sweating signal calculation
+    if sweat_model == "original":
+        sig_sweat = (371.2 * err_cr[0]) + (33.64 * (wrms - clds))
+    else:
+        # Modified model: conditional switched equation (from paper)
+        if err_cr[0] <= 0.01 and wrms <= 0.4:
+            sig_sweat = 271.2 * err_cr[0] + 13.0 * (wrms - clds)
+        else:
+            sig_sweat = 71.2 * np.exp(err_cr[0]) + 33.64 * (wrms - clds)
     sig_sweat = max(sig_sweat, 0)
     sig_sweat *= bsar
 
